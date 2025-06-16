@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Report - {{ filename }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>🔍 Scan Report for: <code>{{ filename }}</code></h2>
+    
+    <h4 class="mt-4">Vulnerability Summary</h4>
+    {% if issues %}
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Severity</th>
+                <th>Confidence</th>
+                <th>Issue</th>
+                <th>File Path</th>
+                <th>Line No.</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for issue in issues %}
+            <tr>
+                <td>{{ issue.test_id }}</td>
+                <td>{{ issue.issue_severity }}</td>
+                <td>{{ issue.issue_confidence }}</td>
+                <td>{{ issue.issue_text }}</td>
+                <td>{{ issue.filename }}</td>
+                <td>{{ issue.line_number }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="alert alert-success mt-3">🎉 No vulnerabilities found!</div>
+    {% endif %}
+
+    <h4 class="mt-5">📋 Bandit Log Output</h4>
+    <pre>{{ raw_log }}</pre>
+
+    <a href="/" class="btn btn-secondary mt-4">🔙 Back to Upload</a>
+</div>
+
+</body>
+</html>
