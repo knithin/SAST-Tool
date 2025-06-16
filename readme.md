@@ -31,6 +31,7 @@ This tool is designed for developers, security enthusiasts, and DevSecOps teams 
 ### 1. Clone the Repository
 
 git clone https://github.com/yourusername/SAST-Tool.git
+
 cd code-security-scanner
 
 ### 2. Install Dependencies
