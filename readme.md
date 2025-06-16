@@ -32,7 +32,7 @@ This tool is designed for developers, security enthusiasts, and DevSecOps teams 
 
 git clone https://github.com/yourusername/SAST-Tool.git
 
-cd code-security-scanner
+cd SAST-Tool
 
 ### 2. Install Dependencies
 
