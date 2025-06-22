@@ -13,8 +13,8 @@ os.makedirs(REPO_DIR, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 # Repo configuration (can be made dynamic later)
-REPO_URL = 'https://github.com/yourusername/your-python-repo.git'
-REPO_NAME = 'your-python-repo'
+REPO_URL = 'https://github.com/knithin/SAST-Tool'
+REPO_NAME = 'SAST-Tool'
 
 def clone_or_pull_repo():
     repo_path = os.path.join(REPO_DIR, REPO_NAME)
