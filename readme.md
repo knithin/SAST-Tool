@@ -20,7 +20,7 @@ A comprehensive **Static Application Security Testing (SAST) tool** built with *
 - **Auto Clone/Pull:** Repositories are cloned (first time) or pulled (subsequent runs) to ensure the latest code is scanned.
 - **Bandit SAST Execution:** The entire repository is scanned for security issues.
 - **Automatic JSON Report Saving:** Each scan result is stored locally with a unique ID for historical tracking.
-- **Configurable Scan Frequency:** Uses the `schedule` Python library to run scans at customizable intervals (default: every 10 minutes).
+- **Configurable Scan Frequency:** Uses the `schedule` Python library to run scans at customizable intervals (default: every 10 minutes). -- **In Progress**
 
 ---
 
@@ -28,7 +28,7 @@ A comprehensive **Static Application Security Testing (SAST) tool** built with *
 - **ZIP Content Validation:** Ensures only `.py` files are scanned from uploaded ZIPs.
 - **File Size Limiting:** Restricts uploaded ZIP files to avoid DoS attacks (default: 10 MB).
 - **Error Handling:** Friendly error pages and server-side checks to prevent misuse.
-- **Docker-Ready:** Can be containerized and deployed securely using Docker.
+- **Docker-Ready:** Can be containerized and deployed securely using Docker. **In-Progress**
 
 ---
 
