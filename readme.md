@@ -47,4 +47,5 @@ A comprehensive **Static Application Security Testing (SAST) tool** built with *
 ### 1. Clone the Repository:
 ```bash
 git clone https://github.com/knithin/SAST-Tool.git
+pip install flask bandit GitPython schedule
 cd SAST-Tool
