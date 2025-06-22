@@ -18,7 +18,11 @@
 
 <div class="container mt-5">
     <h2>🔍 Scan Report for: <code>{{ filename }}</code></h2>
-    
+
+    {% if git_url %}
+        <p><strong>Scanned Git URL:</strong> <a href="{{ git_url }}" target="_blank">{{ git_url }}</a></p>
+    {% endif %}
+
     <h4 class="mt-4">Vulnerability Summary</h4>
     {% if issues %}
     <table class="table table-bordered table-striped mt-3">
@@ -51,6 +55,10 @@
 
     <h4 class="mt-5">📋 Bandit Log Output</h4>
     <pre>{{ raw_log }}</pre>
+
+    {% if report_id %}
+    <a href="/download_report/{{ report_id }}" class="btn btn-success mt-3">📥 Download JSON Report</a>
+    {% endif %}
 
     <a href="/" class="btn btn-secondary mt-4">🔙 Back to Upload</a>
 </div>
