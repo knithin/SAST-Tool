@@ -1,69 +1,85 @@
-import os
-import subprocess
-import json
-import shutil
-import uuid
+from flask import Flask, request, render_template, send_file
+import subprocess, os, json, zipfile, shutil, uuid
 from git import Repo
-import schedule
-import time
 
-REPO_DIR = 'cloned_repos'
-REPORT_DIR = 'scheduled_reports'
-os.makedirs(REPO_DIR, exist_ok=True)
-os.makedirs(REPORT_DIR, exist_ok=True)
+app = Flask(__name__)
 
-# Repo configuration (can be made dynamic later)
-REPO_URL = 'https://github.com/knithin/SAST-Tool'
-REPO_NAME = 'SAST-Tool'
+# Directories for handling files and reports
+UPLOAD_FOLDER = 'uploads'
+EXTRACT_FOLDER = 'extracted'
+REPORT_FOLDER = 'reports'
 
-def clone_or_pull_repo():
-    repo_path = os.path.join(REPO_DIR, REPO_NAME)
-    if not os.path.exists(repo_path):
-        print("Cloning repository...")
-        Repo.clone_from(REPO_URL, repo_path)
+# Ensure folders exist
+for folder in [UPLOAD_FOLDER, EXTRACT_FOLDER, REPORT_FOLDER]:
+    os.makedirs(folder, exist_ok=True)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/scan', methods=['POST'])
+def scan_code():
+    git_url = request.form.get('git_url')  # Git URL input from form
+    extract_path = ''
+    filename = ''
+
+    try:
+        if git_url:  # If Git URL provided
+            repo_id = str(uuid.uuid4())
+            extract_path = os.path.join(EXTRACT_FOLDER, repo_id)
+            os.makedirs(extract_path, exist_ok=True)
+            print(f"Cloning repository from {git_url}...")
+            Repo.clone_from(git_url, extract_path)
+            filename = git_url
+
+        elif 'file' in request.files and request.files['file'].filename != '':
+            file = request.files['file']
+            if not file.filename.endswith('.zip'):
+                return "Error: Only ZIP files are allowed.", 400
+            zip_path = os.path.join(UPLOAD_FOLDER, file.filename)
+            file.save(zip_path)
+            extract_path = os.path.join(EXTRACT_FOLDER, str(uuid.uuid4()))
+            os.makedirs(extract_path, exist_ok=True)
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_path)
+            filename = file.filename
+        else:
+            return "Error: No ZIP file or Git URL provided.", 400
+
+        # Run Bandit on extracted/cloned path
+        result = subprocess.run(['bandit', '-r', extract_path, '-f', 'json'],
+                                capture_output=True, text=True)
+
+        output_json = json.loads(result.stdout)
+        issues = output_json.get('results', [])
+        raw_log = result.stdout
+
+        # Save JSON report for download
+        report_id = str(uuid.uuid4())
+        report_path = os.path.join(REPORT_FOLDER, f"{report_id}.json")
+        with open(report_path, 'w') as f:
+            json.dump(output_json, f)
+
+        # Clean extracted files
+        shutil.rmtree(extract_path, ignore_errors=True)
+
+        return render_template('report.html',
+                               issues=issues,
+                               filename=filename,
+                               raw_log=raw_log,
+                               report_id=report_id,
+                               git_url=git_url)
+
+    except Exception as e:
+        return f"Server Error: {str(e)}", 500
+
+@app.route('/download_report/<report_id>')
+def download_report(report_id):
+    report_path = os.path.join(REPORT_FOLDER, f"{report_id}.json")
+    if os.path.exists(report_path):
+        return send_file(report_path, as_attachment=True)
     else:
-        print("Pulling latest changes...")
-        repo = Repo(repo_path)
-        origin = repo.remotes.origin
-        origin.pull()
-    return repo_path
+        return "Error: Report not found.", 404
 
-def get_changed_files(repo_path):
-    repo = Repo(repo_path)
-    commits = list(repo.iter_commits('master', max_count=2))
-    if len(commits) < 2:
-        return []  # First commit — no changes
-    diff_index = commits[0].diff(commits[1])
-    changed_files = [item.a_path for item in diff_index if item.a_path.endswith('.py')]
-    return changed_files
-
-def run_bandit_scan(path):
-    result = subprocess.run(['bandit', '-r', path, '-f', 'json'],
-                            capture_output=True, text=True)
-    output_json = json.loads(result.stdout)
-    return output_json, result.stdout
-
-def scheduled_task():
-    print("=== Running Scheduled SAST Task ===")
-    repo_path = clone_or_pull_repo()
-    changed_files = get_changed_files(repo_path)
-    print(f"Changed Python files: {changed_files if changed_files else 'None (Full scan)'}")
-
-    scan_path = repo_path  # Optionally restrict to only changed files
-    report, raw_log = run_bandit_scan(scan_path)
-
-    # Save JSON report
-    report_id = str(uuid.uuid4())
-    report_path = os.path.join(REPORT_DIR, f"{report_id}.json")
-    with open(report_path, 'w') as f:
-        json.dump(report, f)
-
-    print(f"Bandit scan complete. Report saved to {report_path}\n")
-
-# Schedule: Run every 10 minutes
-schedule.every(10).minutes.do(scheduled_task)
-
-print("Scheduled SAST tool started. Running every 10 minutes...")
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
