@@ -1,56 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Scan Report</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-<body>
-<div class="container mt-5">
-  <h2>🔍 Scan Report</h2>
-  {% if git_url %}<p><strong>Repo:</strong> <a href="{{ git_url }}">{{ git_url }}</a></p>{% endif %}
-  {% if target_url %}<p><strong>Website:</strong> <a href="{{ target_url }}">{{ target_url }}</a></p>{% endif %}
-
-  <h4>✅ Code Issues:</h4>
-  {% if issues %}
-  <table class="table table-striped">
-    <thead class="table-dark">
-      <tr><th>ID</th><th>Severity</th><th>CVSS v3</th><th>Message</th><th>File</th><th>Line</th></tr>
-    </thead>
-    <tbody>
-    {% for i in issues %}
-      <tr>
-        <td>{{ i.check_id }}</td>
-        <td>{{ i.normalized_severity }}</td>
-        <td>{{ i.cvss_score }}</td>
-        <td>{{ i.extra.message }}</td>
-        <td>{{ i.path }}</td>
-        <td>{{ i.start.line }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-    <div class="alert alert-success">No code issues detected.</div>
-  {% endif %}
-
-  {% if target_url %}
-  <h4 class="mt-4">🔐 Website Secrets:</h4>
-  {% if website_findings %}
-    <table class="table table-bordered">
-      <thead class="table-dark"><tr><th>Type</th><th>Match</th><th>URL</th></tr></thead>
-      <tbody>
-      {% for f in website_findings %}
-        <tr><td>{{ f.pattern }}</td><td><code>{{ f.match }}</code></td><td><a href="{{ f.url }}">{{ f.url }}</a></td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <div class="alert alert-success">No secrets found on the scanned site.</div>
-  {% endif %}
-  {% endif %}
-
-  <h4 class="mt-4">📄 Raw JSON Output:</h4>
-  <pre style="background:#eee;padding:10px;border-radius:4px">{{ raw_log }}</pre>
-  <a href="/download_report/{{ report_id }}" class="btn btn-success mt-3">Download Full JSON Report</a>
-  <a href="/" class="btn btn-secondary mt-3">Run Another Scan</a>
-</div>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <title>Scan Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>🔍 Scan Report</h2>{% if git_url %}
+      <p><strong>Repo:</strong> 
+        <a href="{{ git_url }}">{{ git_url }}</a>
+      </p>{% endif %}{% if target_url %}
+      <p><strong>Website:</strong> 
+        <a href="{{ target_url }}">{{ target_url }}</a>
+      </p>{% endif %}{% if issues %}
+      <h4>Code Findings (Semgrep)</h4>
+      <table class="table table-striped">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Severity</th>
+            <th>CVSS</th>
+            <th>Msg</th>
+            <th>File</th>
+            <th>Line</th>
+          </tr>
+        </thead>
+        <tbody>{% for i in issues %}
+          <tr>
+            <td>{{i.check_id}}</td>
+            <td>{{i.normalized_severity}}</td>
+            <td>{{i.cvss_score}}</td>
+            <td>{{i.extra.message}}</td>
+            <td>{{i.path}}</td>
+            <td>{{i.start.line}}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>{% endif %}{% if subdomains %}
+      <h4>Subdomains & SSL</h4>
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Host</th>
+            <th>Issuer</th>
+            <th>Expiry</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>{% for c in cert_info %}
+          <tr>
+            <td>{{c.hostname}}</td>
+            <td>{{c.issuer}}</td>
+            <td>{{c.expiry}}</td>
+            <td>{{c.status}}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>{% endif %}{% if secrets %}
+      <h4>Secrets Found</h4>
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Pattern</th>
+            <th>Match</th>
+          </tr>
+        </thead>
+        <tbody>{% for s in secrets %}
+          <tr>
+            <td>{{s.pattern}}</td>
+            <td><code>{{s.match}}</code></td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>{% endif %}{% if zap_results %}
+      <h4>Website Vulnerabilities (ZAP)</h4>
+      <table class="table table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Risk</th>
+            <th>URL</th>
+            <th>Parameter</th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>{% for a in zap_results %}
+          <tr>
+            <td>{{a.risk}}</td>
+            <td>{{a.url}}</td>
+            <td>{{a.param}}</td>
+            <td>{{a.name}}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>{% endif %}
+      <h4>Raw Semgrep Log</h4>
+      <pre style="background:#eee;padding:10px">{{ raw_log }}</pre>
+      <a href="/download_report/{{ report_id }}" class="btn btn-success mt-3">Download JSON Report</a>
+      <a href="/" class="btn btn-secondary mt-3 ms-2">Run Another Scan</a>
+    </div>
+  </body>
 </html>
